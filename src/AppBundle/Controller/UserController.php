@@ -9,6 +9,7 @@ use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use JWT;
 
 class UserController extends Controller{
 
@@ -16,6 +17,7 @@ class UserController extends Controller{
      * @Route("/users", name="create_user")
      * @Method("POST")
      */
+
     public function createAction(Request $request){
 
         $jsonData = $request->getContent();
@@ -23,6 +25,11 @@ class UserController extends Controller{
         $data = json_decode($jsonData, true);
 
         try {
+
+            $key = "SEBAJAMES";
+            $token = $request->headers->get("token-aut");
+            JWT::decode($token, $key, array("HS256"));
+
             $conn = $this->getDoctrine()->getConnection();
 
             $query = $conn->prepare(
@@ -33,10 +40,13 @@ class UserController extends Controller{
                    :state
                    )"
             );
+
+            $password = password_hash($data['password'],PASSWORD_BCRYPT,array("cost" => 12));
+
             $query->bindValue("name", $data['name']);
             $query->bindValue("lastname", $data['lastname']);
             $query->bindValue("email", $data['email']);
-            $query->bindValue("password", $data['password']);
+            $query->bindValue("password", $password);
             $query->bindValue("create_date", $data['create_date']);
             $query->bindValue("id_originator", $data['id_originator']);
             $query->bindValue("group_id", $data['group_id']);
@@ -59,26 +69,47 @@ class UserController extends Controller{
      * @Route("/users/{id}", name="get_user_id")
      * @Method("GET")
      */
-    public function getByIdAction($id){
+    public function getByIdAction($id, Request $request){
 
-        $conn = $this->getDoctrine()->getConnection();
+        try {
 
-        $query = $conn->executeQuery("CALL getUser(?)", array($id));
-        $data = $query->fetch();
+            $key = "SEBAJAMES";
+            $token = $request->headers->get("token-aut");
+            JWT::decode($token, $key, array("HS256"));
+
+            $conn = $this->getDoctrine()->getConnection();
+
+            $query = $conn->executeQuery("CALL getUser(?)", array($id));
+            $data = $query->fetch();
+
+        }catch(\Exception $e){
+            return new JsonResponse(array("message" => $e->getMessage()));
+        }
 
         return new JsonResponse($data);
+
     }
 
     /**
      * @Route("/users/group/{groupId}", name="get_user_groupId")
      * @Method("GET")
      */
-    public function getAction($groupId){
+    public function getAction($groupId, Request $request){
 
-        $conn = $this->getDoctrine()->getConnection();
+        try {
 
-        $query = $conn->executeQuery("CALL getUsers(?)",array($groupId));
-        $data = $query->fetchAll();
+            $key = "SEBAJAMES";
+            $token = $request->headers->get("token-aut");
+            JWT::decode($token, $key, array("HS256"));
+
+            $conn = $this->getDoctrine()->getConnection();
+
+            $query = $conn->executeQuery("CALL getUsers(?)", array($groupId));
+            $data = $query->fetchAll();
+
+        }catch(\Exception $e){
+            return new JsonResponse(array("message" => $e->getMessage()));
+        }
 
         return new JsonResponse($data);
     }
@@ -94,6 +125,11 @@ class UserController extends Controller{
         $data = json_decode($jsonData, true);
 
         try {
+
+            $key = "SEBAJAMES";
+            $token = $request->headers->get("token-aut");
+            JWT::decode($token, $key, array("HS256"));
+
             $conn = $this->getDoctrine()->getConnection();
 
             $query = $conn->prepare(
@@ -128,6 +164,44 @@ class UserController extends Controller{
      */
     public function deleteAction($id){
         //
+    }
+
+    /**
+     * @Route("/login", name="login_user")
+     * @Method("GET")
+     */
+    public function loginAction(Request $request){
+
+        $user = $request->headers->get("user");
+        $password = $request->headers->get("password");
+
+        try {
+
+            $conn = $this->getDoctrine()->getConnection();
+
+            $query = $conn->executeQuery("CALL loginUser(?)", array($user));
+            $data = $query->fetchAll();
+
+            if(!$data){
+                throw new \Exception("Usuario no valido!!");
+            }
+
+            if(!password_verify($password,$data[0]["password"])){
+                throw new \Exception("Password no valido!!");
+            }
+            unset($data[0]["password"]);
+
+            $key = "SEBAJAMES";
+            $jwt = JWT::encode($data[0],$key);
+
+        }catch(\Exception $e){
+            return new JsonResponse(array("messaje" => $e->getMessage()));
+        }
+
+        $response = new Response();
+        $response->headers->set("token-aut",$jwt);
+
+        return $response;
     }
 
 } 
