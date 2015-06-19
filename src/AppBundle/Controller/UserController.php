@@ -168,25 +168,25 @@ class UserController extends Controller{
 
     /**
      * @Route("/login", name="login_user")
-     * @Method("GET")
+     * @Method("POST")
      */
     public function loginAction(Request $request){
 
-        $user = $request->headers->get("user");
-        $password = $request->headers->get("password");
+        $contentData = $request->getContent();
+        $jsonData = json_decode($contentData, true);
 
         try {
 
             $conn = $this->getDoctrine()->getConnection();
 
-            $query = $conn->executeQuery("CALL loginUser(?)", array($user));
+            $query = $conn->executeQuery("CALL loginUser(?)", array($jsonData['user']));
             $data = $query->fetchAll();
 
             if(!$data){
                 throw new \Exception("Usuario no valido!!");
             }
 
-            if(!password_verify($password,$data[0]["password"])){
+            if(!password_verify($jsonData['password'],$data[0]["password"])){
                 throw new \Exception("Password no valido!!");
             }
             unset($data[0]["password"]);
@@ -198,10 +198,7 @@ class UserController extends Controller{
             return new JsonResponse(array("messaje" => $e->getMessage()));
         }
 
-        $response = new Response();
-        $response->headers->set("token-aut",$jwt);
-
-        return $response;
+        return new JsonResponse(array("token-aut" => $jwt));
     }
 
 } 
