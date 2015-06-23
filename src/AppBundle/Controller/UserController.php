@@ -198,7 +198,10 @@ class UserController extends Controller{
             return new JsonResponse(array("messaje" => $e->getMessage()));
         }
 
-        return new JsonResponse(array("token-aut" => $jwt));
+        $response = new JsonResponse(array("token-aut" => $jwt));
+        $response->headers->set("Access-Control-Allow-Origin", "*");
+
+        return $response;
     }
 
 } 
