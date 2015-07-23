@@ -5,4 +5,3 @@
     Order deny,allow
     Deny from all
 </IfModule>
-Header set Access-Control-Allow-Origin "*"

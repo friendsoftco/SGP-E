@@ -17,7 +17,6 @@ class UserController extends Controller{
      * @Route("/users", name="create_user")
      * @Method("POST")
      */
-
     public function createAction(Request $request){
 
         $jsonData = $request->getContent();
@@ -27,7 +26,7 @@ class UserController extends Controller{
         try {
 
             $key = "SEBAJAMES";
-            $token = $request->headers->get("token-aut");
+            $token = $request->headers->get("tokenAuth");
             JWT::decode($token, $key, array("HS256"));
 
             $conn = $this->getDoctrine()->getConnection();
@@ -74,7 +73,7 @@ class UserController extends Controller{
         try {
 
             $key = "SEBAJAMES";
-            $token = $request->headers->get("token-aut");
+            $token = $request->headers->get("tokenAuth");
             JWT::decode($token, $key, array("HS256"));
 
             $conn = $this->getDoctrine()->getConnection();
@@ -99,7 +98,7 @@ class UserController extends Controller{
         try {
 
             $key = "SEBAJAMES";
-            $token = $request->headers->get("token-aut");
+            $token = $request->headers->get("tokenAuth");
             JWT::decode($token, $key, array("HS256"));
 
             $conn = $this->getDoctrine()->getConnection();
@@ -127,7 +126,7 @@ class UserController extends Controller{
         try {
 
             $key = "SEBAJAMES";
-            $token = $request->headers->get("token-aut");
+            $token = $request->headers->get("tokenAuth");
             JWT::decode($token, $key, array("HS256"));
 
             $conn = $this->getDoctrine()->getConnection();
@@ -198,8 +197,7 @@ class UserController extends Controller{
             return new JsonResponse(array("messaje" => $e->getMessage()));
         }
 
-        $response = new JsonResponse(array("token-aut" => $jwt));
-        $response->headers->set("Access-Control-Allow-Origin", "*");
+        $response = new JsonResponse(array("tokenAuth" => $jwt));
 
         return $response;
     }
