@@ -20,17 +20,12 @@ class UserController extends Controller{
     public function createAction(Request $request){
 
         $jsonData = $request->getContent();
-
         $data = json_decode($jsonData, true);
 
-        try {
-
-            $key = "SEBAJAMES";
-            $token = $request->headers->get("tokenAuth");
-            JWT::decode($token, $key, array("HS256"));
-
+        try{
+            
             $conn = $this->getDoctrine()->getConnection();
-
+    
             $query = $conn->prepare(
                 "CALL createUser(
                    :name, :lastname, :email,:password,
@@ -39,9 +34,9 @@ class UserController extends Controller{
                    :state
                    )"
             );
-
+    
             $password = password_hash($data['password'],PASSWORD_BCRYPT,array("cost" => 12));
-
+    
             $query->bindValue("name", $data['name']);
             $query->bindValue("lastname", $data['lastname']);
             $query->bindValue("email", $data['email']);
@@ -54,10 +49,9 @@ class UserController extends Controller{
             $query->bindValue("address", $data['address']);
             $query->bindValue("roles_id", $data['roles_id']);
             $query->bindValue("state", $data['state']);
-
             $query->execute();
         }catch(\Exception $e){
-            return new JsonResponse(array("message"=>$e->getMessage()));
+            return new JsonResponse(array("message"=>$e->getMessage()),500);
         };
 
         return new JsonResponse(array("message"=>"Usuario creado correctamente."));
@@ -68,23 +62,18 @@ class UserController extends Controller{
      * @Route("/users/{id}", name="get_user_id")
      * @Method("GET")
      */
-    public function getByIdAction($id, Request $request){
+    public function getByIdAction($id){
 
-        try {
-
-            $key = "SEBAJAMES";
-            $token = $request->headers->get("tokenAuth");
-            JWT::decode($token, $key, array("HS256"));
-
+        try{        
+            
             $conn = $this->getDoctrine()->getConnection();
-
+            
             $query = $conn->executeQuery("CALL getUser(?)", array($id));
             $data = $query->fetch();
-
         }catch(\Exception $e){
-            return new JsonResponse(array("message" => $e->getMessage()));
-        }
-
+            return new JsonResponse(array("message"=>$e->getMessage()),500);
+        };
+        
         return new JsonResponse($data);
 
     }
@@ -93,22 +82,16 @@ class UserController extends Controller{
      * @Route("/users/group/{groupId}", name="get_user_groupId")
      * @Method("GET")
      */
-    public function getAction($groupId, Request $request){
-
-        try {
-
-            $key = "SEBAJAMES";
-            $token = $request->headers->get("tokenAuth");
-            JWT::decode($token, $key, array("HS256"));
-
+    public function getAction($groupId){
+        
+        try{    
             $conn = $this->getDoctrine()->getConnection();
-
+    
             $query = $conn->executeQuery("CALL getUsers(?)", array($groupId));
             $data = $query->fetchAll();
-
         }catch(\Exception $e){
-            return new JsonResponse(array("message" => $e->getMessage()));
-        }
+            return new JsonResponse(array("message"=>$e->getMessage()),500);
+        };    
 
         return new JsonResponse($data);
     }
@@ -120,14 +103,9 @@ class UserController extends Controller{
     public function updateAction(Request $request){
 
         $jsonData = $request->getContent();
-
         $data = json_decode($jsonData, true);
 
         try {
-
-            $key = "SEBAJAMES";
-            $token = $request->headers->get("tokenAuth");
-            JWT::decode($token, $key, array("HS256"));
 
             $conn = $this->getDoctrine()->getConnection();
 
@@ -151,7 +129,7 @@ class UserController extends Controller{
 
             $query->execute();
         }catch(\Exception $e){
-            return new JsonResponse(array("message"=>$e->getMessage()));
+            return new JsonResponse(array("message"=>$e->getMessage()),500);
         };
 
         return new JsonResponse(array("message"=>"Usuario actualizado correctamente."));
@@ -194,10 +172,10 @@ class UserController extends Controller{
             $jwt = JWT::encode($data[0],$key);
 
         }catch(\Exception $e){
-            return new JsonResponse(array("messaje" => $e->getMessage()));
+            return new JsonResponse(array("messaje" => $e->getMessage()),500);
         }
 
-        $response = new JsonResponse(array("tokenAuth" => $jwt));
+        $response = new JsonResponse(array("X-Custom-Auth" => $jwt));
 
         return $response;
     }
